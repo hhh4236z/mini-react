@@ -27,6 +27,14 @@ export default defineConfig({
 })
 ```
 
+也可以使用如下注释来改变
+
+```js
+/** @jsx h */
+```
+
+> 这是 `esbuild` 对齐 [babel-plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx#customizing-the-classic-runtime-import) 的功能
+
 ## 拓展
 
 - 调试虚拟节点的函数，采用单元测试更为高效、简便
