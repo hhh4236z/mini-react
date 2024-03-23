@@ -41,7 +41,9 @@ function createElement(type, props, ...children) {
   }
 }
 
-export {
+const React = {
   render,
   createElement,
 }
+
+export default React

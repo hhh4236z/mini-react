@@ -1,10 +1,10 @@
-import { render } from './react.js'
+import React from './react.js'
 
 const ReactDOM = {
   createRoot(container) {
     return {
       render(App) {
-        render(App, container)
+        React.render(App, container)
       },
     }
   },

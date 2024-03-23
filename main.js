@@ -1,6 +1,4 @@
-import { createElement } from './core/react.js'
-import ReactDOM from './core/ReactDom.js'
-
-const App = createElement('div', { id: 'app' }, 'hello', '-', 'world')
+import ReactDOM from './core/reactDom.js'
+import App from './App.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(App)
