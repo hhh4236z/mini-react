@@ -26,3 +26,7 @@ export default defineConfig({
   },
 })
 ```
+
+## 拓展
+
+- 调试虚拟节点的函数，采用单元测试更为高效、简便
