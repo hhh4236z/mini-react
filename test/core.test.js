@@ -1,5 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it, vi } from 'vitest'
 import React from '../core/react.js'
+
+beforeAll(() => {
+  vi.useFakeTimers({
+    toFake: ['requestIdleCallback'],
+  })
+})
 
 describe('test mini-react', () => {
   it('react createElement should be work', () => {

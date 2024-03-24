@@ -27,6 +27,7 @@ function createTextElement(text) {
 }
 
 function createElement(type, props, ...children) {
+  requestIdleCallback(() => {})
   return {
     type,
     props: {
