@@ -120,8 +120,8 @@ function loop(deadline) {
     nextFiber = performUnitWork(nextFiber)
     shouldYield = deadline.timeRemaining() < 1
   }
+  requestIdleCallback(loop)
 }
-requestIdleCallback(loop)
 
 const React = {
   render,
