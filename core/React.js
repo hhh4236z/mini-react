@@ -105,8 +105,13 @@ function performUnitWork(fiber) {
     return fiber.sibiling
 
   // 找父亲的兄弟
-  if (fiber.parent?.sibiling)
-    return fiber.parent.sibiling
+  // 父亲的兄弟没有，就找爷爷的兄弟
+  let parent = fiber.parent
+  while (parent) {
+    if (parent.sibiling)
+      return parent.sibiling
+    parent = parent.parent
+  }
 }
 
 /**
