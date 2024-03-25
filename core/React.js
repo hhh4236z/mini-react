@@ -2,6 +2,8 @@ const TEXT_ELEMENT = 'TEXT ELEMENT'
 
 // 调度
 let nextFiber = null
+// 统一提交
+let root = null
 
 function render(node, container) {
   // 构造一个根节点的fiber
@@ -13,6 +15,7 @@ function render(node, container) {
     },
   }
 
+  root = nextFiber
   requestIdleCallback(loop)
 }
 
@@ -88,9 +91,6 @@ function performUnitWork(fiber) {
     // 判断一下，如果是根节点挂载的化，dom已经是有的了
     const el = (fiber.dom = createDom(fiber.type))
 
-    // 找到父节点的dom来挂载
-    fiber.parent.dom.append(el)
-
     updateProps(el, fiber.props)
   }
 
@@ -125,7 +125,27 @@ function loop(deadline) {
     nextFiber = performUnitWork(nextFiber)
     shouldYield = deadline.timeRemaining() < 1
   }
+
+  if (!nextFiber && root) {
+    // 没有下一个 fiber 了，说明递归结束了，可以提交了
+    // 统一挂载，避免有些任务先挂载显示了，然后后续的没有空闲时间，等会就才挂载
+    commitRoot()
+    root = null
+  }
   requestIdleCallback(loop)
+}
+
+function commitRoot() {
+  // 根的 dom已经是挂载的
+  commitFiber(root.child)
+}
+
+function commitFiber(fiber) {
+  if (!fiber)
+    return
+  fiber.parent.dom.append(fiber.dom)
+  commitFiber(fiber.child)
+  commitFiber(fiber.sibiling)
 }
 
 const React = {
