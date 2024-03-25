@@ -35,7 +35,8 @@ function createElement(type, props, ...children) {
     props: {
       ...props,
       children: children.map((child) => {
-        if (typeof child === 'string')
+        const isTextNode = typeof child === 'string' || typeof child === 'number'
+        if (isTextNode)
           return createTextElement(child)
         return child
       }),
@@ -56,10 +57,9 @@ function updateProps(dom, props) {
   })
 }
 
-function initChildren(fiber) {
+function initChildren(fiber, children) {
   // 处理子节点
   let prevFiber = null
-  const children = fiber.props.children
   children.forEach((child, index) => {
     // 构造一个，而不是直接在 child本身添加
     // child 是一个 vdom
@@ -85,16 +85,30 @@ function initChildren(fiber) {
   })
 }
 
-// 处理单个任务
-function performUnitWork(fiber) {
+function updateFunctionComponent(fiber) {
+  // fiber.type 即为函数式组件的函数，传入props
+  const children = [fiber.type(fiber.props)]
+  initChildren(fiber, children)
+}
+
+function updateHoistComponent(fiber) {
   if (!fiber.dom) {
     // 判断一下，如果是根节点挂载的化，dom已经是有的了
     const el = (fiber.dom = createDom(fiber.type))
 
     updateProps(el, fiber.props)
   }
+  initChildren(fiber, fiber.props.children)
+}
 
-  initChildren(fiber)
+// 处理单个任务
+function performUnitWork(fiber) {
+  const isFunctionComponent = typeof fiber.type === 'function'
+
+  if (isFunctionComponent)
+    updateFunctionComponent(fiber)
+  else
+    updateHoistComponent(fiber)
 
   // 第一个child
   if (fiber.child)
@@ -143,7 +157,15 @@ function commitRoot() {
 function commitFiber(fiber) {
   if (!fiber)
     return
-  fiber.parent.dom.append(fiber.dom)
+
+  // function 节点是没有dom的，因此要向上找
+  let parentFiber = fiber.parent
+  while (!parentFiber.dom)
+    parentFiber = parentFiber.parent
+
+  if (fiber.dom)
+    parentFiber.dom.append(fiber.dom)
+
   commitFiber(fiber.child)
   commitFiber(fiber.sibiling)
 }
