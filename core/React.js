@@ -86,7 +86,10 @@ function updateProps(dom, newProps, oldProps = {}) {
     }
     else if (key !== 'children') {
       // 更新
-      dom[key] = newProps[key]
+      if (shouldSetAsProps(dom, key, newProps[key]))
+        dom[key] = newProps[key]
+      else
+        dom.setAttribute(key, newProps[key])
     }
   })
 }
@@ -236,6 +239,13 @@ function commitFiber(fiber) {
 
   commitFiber(fiber.child)
   commitFiber(fiber.sibiling)
+}
+
+function shouldSetAsProps(el, key, _value) {
+  // 特殊情况，input.form是只读的，只能通过 setAttribute设置
+  if (key === 'form' && el.tagName === 'INPUT')
+    return false
+  return key in el
 }
 
 const React = {

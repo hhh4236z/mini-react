@@ -12,7 +12,8 @@ function Counter({ num }) {
     React.update()
   }
   return (<div>This is {count}
-    <button onClick={handleClick}>click</button>  
+    <button onClick={handleClick}>click</button>
+    <input type="text" form={count}/>
   </div>);
 }
 
