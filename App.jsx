@@ -1,8 +1,12 @@
 import React from './core/React.js'
 
 function Counter({ num }) {
-  return <div>This is {num}</div>
-
+  function handleClick() {
+    console.log('click')
+  }
+  return (<div>This is {num}
+    <button onClick={handleClick}>click</button>  
+  </div>);
 }
 
 function App() {
