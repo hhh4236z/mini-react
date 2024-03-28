@@ -52,6 +52,7 @@ function App() {
   }
   return (
     <div>
+      {appCount % 2 === 0 && <p>xixi</p>}
       <h1>app</h1>
       <div>
         <button onClick={handleClick}>app {appCount}</button>

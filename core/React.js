@@ -30,6 +30,8 @@ function update() {
   return () => {
     wipRoot = {
       ...currentFiber,
+      // reconcileChildren时重新收集 child
+      child: null,
       alternate: currentFiber,
     }
 
@@ -149,8 +151,7 @@ function reconcileChildren(fiber, children) {
     }
 
     // 考虑如果第一个节点是 false，因此不能用 index === 0来判断
-    // 但是用 fiber.child 来判断，又可能出现没有 prevFiber的时候 (有可能是一个funciont 组件的更新)
-    if (index === 0) {
+    if (!fiber.child) {
       // 第一个儿子，
       fiber.child = newFiber
     }
