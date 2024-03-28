@@ -115,7 +115,7 @@ function reconcileChildren(fiber, children) {
         parent: fiber,
         // 还是原来的 dom，不需要更新
         dom: oldFiber.dom,
-        sibiling: null,
+        sibling: null,
         child: null,
         // 记录上对应的旧节点
         alternate: oldFiber,
@@ -128,7 +128,7 @@ function reconcileChildren(fiber, children) {
         props: child.props,
         parent: fiber,
         dom: null,
-        sibiling: null,
+        sibling: null,
         child: null,
         // 记录上对应的旧节点
         alternate: oldFiber,
@@ -146,20 +146,20 @@ function reconcileChildren(fiber, children) {
     }
     else {
       // 兄弟节点形成链表
-      prevFiber.sibiling = newFiber
+      prevFiber.sibling = newFiber
     }
 
     prevFiber = newFiber
 
     // 旧节点对应更新
-    oldFiber = oldFiber?.sibiling
+    oldFiber = oldFiber?.sibling
   })
 
   // 新的比旧的短
   // 剩余的旧的全删掉
   while (oldFiber) {
     deletions.push(oldFiber)
-    oldFiber = oldFiber.sibiling
+    oldFiber = oldFiber.sibling
   }
 }
 
@@ -193,15 +193,15 @@ function performUnitWork(fiber) {
     return fiber.child
 
   // 找兄弟
-  if (fiber.sibiling)
-    return fiber.sibiling
+  if (fiber.sibling)
+    return fiber.sibling
 
   // 找父亲的兄弟
   // 父亲的兄弟没有，就找爷爷的兄弟
   let parent = fiber.parent
   while (parent) {
-    if (parent.sibiling)
-      return parent.sibiling
+    if (parent.sibling)
+      return parent.sibling
     parent = parent.parent
   }
 }
@@ -268,7 +268,7 @@ function commitFiber(fiber) {
   }
 
   commitFiber(fiber.child)
-  commitFiber(fiber.sibiling)
+  commitFiber(fiber.sibling)
 }
 
 function shouldSetAsProps(el, key, _value) {
