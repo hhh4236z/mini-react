@@ -5,6 +5,8 @@ let nextWorkOfUnit = null
 let wipRoot = null
 // 记录旧的节点
 let currentRoot = null
+// 要删除的
+const deletions = []
 
 function render(node, container) {
   wipRoot = {
@@ -132,6 +134,10 @@ function reconcileChildren(fiber, children) {
         alternate: oldFiber,
         effectTag: 'placement',
       }
+
+      // 不一样，旧的要删除
+      if (oldFiber)
+        deletions.push(oldFiber)
     }
 
     if (index === 0) {
@@ -206,6 +212,8 @@ function loop(deadline) {
   }
 
   if (!nextWorkOfUnit && wipRoot) {
+    deletions.forEach(deleteFiber)
+    deletions.length = 0
     // 没有下一个 fiber 了，说明递归结束了，可以提交了
     // 统一挂载，避免有些任务先挂载显示了，然后后续的没有空闲时间，等会就才挂载
     commitRoot()
@@ -219,6 +227,21 @@ function loop(deadline) {
 function commitRoot() {
   // 根的 dom已经是挂载的
   commitFiber(wipRoot.child)
+}
+
+function deleteFiber(fiber) {
+  // 删除fiber
+  if (fiber.dom) {
+  // function 节点是没有dom的，因此要向上找
+    let parentFiber = fiber.parent
+    while (!parentFiber.dom)
+      parentFiber = parentFiber.parent
+    parentFiber.dom.removeChild(fiber.dom)
+  }
+  else {
+    // function component, 删除其子节点
+    deleteFiber(fiber.child)
+  }
 }
 
 function commitFiber(fiber) {

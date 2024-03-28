@@ -1,26 +1,22 @@
 import React from './core/React.js'
 
-let count = 10
-let props = {
-  id: 1234
-}
+let show = false
+
 function Counter({ num }) {
   function handleClick() {
-    console.log('click')
-    count++
-    props = {}
+    show = !show
     React.update()
   }
-  return (<div>This is {count}
+  return (<div>
     <button onClick={handleClick}>click</button>
-    <input type="text" form={count}/>
   </div>);
 }
 
 function App() {
   return (
-  <div {...props}>
+  <div>
     <Counter />
+    { show ? <p>hello</p> : 'xixi'}
   </div>    
   )
 }
