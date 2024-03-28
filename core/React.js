@@ -154,6 +154,13 @@ function reconcileChildren(fiber, children) {
     // 旧节点对应更新
     oldFiber = oldFiber?.sibiling
   })
+
+  // 新的比旧的短
+  // 剩余的旧的全删掉
+  while (oldFiber) {
+    deletions.push(oldFiber)
+    oldFiber = oldFiber.sibiling
+  }
 }
 
 function updateFunctionComponent(fiber) {
