@@ -102,10 +102,11 @@ function reconcileChildren(fiber, children) {
   // 拿出旧的对应fiber
   // 第一个要比较的显然就是旧的fiber的child
   let oldFiber = fiber.alternate?.child
+  console.log(fiber)
   children.forEach((child, index) => {
     let newFiber
 
-    const isSameType = oldFiber?.type === child.type
+    const isSameType = oldFiber && oldFiber.type === child.type
 
     if (isSameType) {
       // 相同type，那就只是更新，不用挂载了
@@ -123,16 +124,18 @@ function reconcileChildren(fiber, children) {
       }
     }
     else {
-      newFiber = {
-        type: child.type,
-        props: child.props,
-        parent: fiber,
-        dom: null,
-        sibling: null,
-        child: null,
-        // 记录上对应的旧节点
-        alternate: oldFiber,
-        effectTag: 'placement',
+      // 可能是空节点，要忽略掉
+      if (child) {
+        newFiber = {
+          type: child.type,
+          props: child.props,
+          parent: fiber,
+          dom: null,
+          sibling: null,
+          child: null,
+          effectTag: 'placement',
+          // 新节点，旧不需要 alternate 指向了 （简易版
+        }
       }
 
       // 不一样，旧的要删除
@@ -140,7 +143,8 @@ function reconcileChildren(fiber, children) {
         deletions.push(oldFiber)
     }
 
-    if (index === 0) {
+    // 考虑如果第一个节点是 false，因此不能用 index === 0来判断
+    if (!fiber.child) {
       // 第一个儿子，
       fiber.child = newFiber
     }
@@ -149,7 +153,9 @@ function reconcileChildren(fiber, children) {
       prevFiber.sibling = newFiber
     }
 
-    prevFiber = newFiber
+    // 确保有，才更新为上一个节点
+    if (newFiber)
+      prevFiber = newFiber
 
     // 旧节点对应更新
     oldFiber = oldFiber?.sibling

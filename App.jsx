@@ -1,6 +1,6 @@
 import React from './core/React.js'
 
-let show = true
+let show = false
 
 function Counter({ num }) {
   function handleClick() {
@@ -13,18 +13,15 @@ function Counter({ num }) {
 }
 
 function App() {
+  function handleClick() {
+    show = !show
+    React.update()
+  }
   return (
     <div>
-      {
-        show ? <div>
-          <span>1</span>
-          <span>2</span>
-          <span>3</span>
-        </div> : <div>
-          <span>1</span>
-        </div>
-      }
-      <Counter />
+      <p>hello world</p>
+      { show && <h2>xixi</h2>} 
+      <button onClick={handleClick}>show</button>
     </div>
   )
 }
