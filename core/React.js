@@ -5,6 +5,8 @@ let nextWorkOfUnit = null
 let wipRoot = null
 // 记录旧的节点
 let currentRoot = null
+// 记录中途局部更新的
+let wipFiber = null
 // 要删除的
 const deletions = []
 
@@ -22,14 +24,18 @@ function render(node, container) {
 }
 
 function update() {
-  wipRoot = {
-    dom: currentRoot.dom,
-    props: currentRoot.props,
-    alternate: currentRoot,
-  }
+  // 记录当前的
+  const currentFiber = wipFiber
 
-  nextWorkOfUnit = wipRoot
-  requestIdleCallback(loop)
+  return () => {
+    wipRoot = {
+      ...currentFiber,
+      alternate: currentFiber,
+    }
+
+    nextWorkOfUnit = wipRoot
+    requestIdleCallback(loop)
+  }
 }
 
 function createTextElement(text) {
@@ -102,7 +108,6 @@ function reconcileChildren(fiber, children) {
   // 拿出旧的对应fiber
   // 第一个要比较的显然就是旧的fiber的child
   let oldFiber = fiber.alternate?.child
-  console.log(fiber)
   children.forEach((child, index) => {
     let newFiber
 
@@ -144,7 +149,8 @@ function reconcileChildren(fiber, children) {
     }
 
     // 考虑如果第一个节点是 false，因此不能用 index === 0来判断
-    if (!fiber.child) {
+    // 但是用 fiber.child 来判断，又可能出现没有 prevFiber的时候 (有可能是一个funciont 组件的更新)
+    if (index === 0) {
       // 第一个儿子，
       fiber.child = newFiber
     }
@@ -170,6 +176,9 @@ function reconcileChildren(fiber, children) {
 }
 
 function updateFunctionComponent(fiber) {
+  // 记录更新的 function
+  wipFiber = fiber
+
   // fiber.type 即为函数式组件的函数，传入props
   const children = [fiber.type(fiber.props)]
   reconcileChildren(fiber, children)
@@ -221,6 +230,11 @@ function loop(deadline) {
 
   while (!shouldYield && nextWorkOfUnit) {
     nextWorkOfUnit = performUnitWork(nextWorkOfUnit)
+
+    // 更新到当前更新根节点的兄弟节点时，就没必要更新了
+    if (wipRoot?.sibling?.type === nextWorkOfUnit?.type)
+      nextWorkOfUnit = undefined
+
     shouldYield = deadline.timeRemaining() < 1
   }
 
