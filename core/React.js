@@ -331,9 +331,18 @@ function useState(initial) {
   currentFiber.stateHooks = stateHooks
 
   function setState(action) {
+    const normalAction = typeof action === 'function' ? action : () => action
+
+    const eager = normalAction(stateHook.value)
+
+    // 更新后的值不变，就没必要更新
+    // 但是每次先执行 action，那queue 有什么意义？
+    if (eager === stateHook.value)
+      return
+
     // 收集 action
     // 归一化 直接传参的写法
-    stateHook.queue.push(typeof action === 'function' ? action : () => action)
+    stateHook.queue.push(normalAction)
 
     wipRoot = {
       ...currentFiber,
