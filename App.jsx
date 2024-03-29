@@ -54,7 +54,7 @@ function App() {
   }
 
   function handleOtherClick() {
-    setFoo(v => `${v}0`)
+    setFoo('bar')
   }
 
   return (

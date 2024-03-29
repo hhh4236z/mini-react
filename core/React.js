@@ -315,15 +315,25 @@ function useState(initial) {
 
   const stateHook = {
     value: oldStateHook ? oldStateHook.value : initial,
+    // 所有 setState的执行，收集起来，等下次useState调用，再批量处理
+    queue: oldStateHook ? oldStateHook.queue : [],
   }
+
+  stateHook.queue.forEach((action) => {
+    // 更新，方便下一次更新的时候，从 alternate 中的stateHooks获取到
+    stateHook.value = action(stateHook.value)
+  })
+
+  stateHook.queue = []
 
   stateHooks.push(stateHook)
   // 保存起来
   currentFiber.stateHooks = stateHooks
 
   function setState(action) {
-    // 更新，方便下一次更新的时候，从 alternate 中的stateHooks获取到
-    stateHook.value = action(stateHook.value)
+    // 收集 action
+    // 归一化 直接传参的写法
+    stateHook.queue.push(typeof action === 'function' ? action : () => action)
 
     wipRoot = {
       ...currentFiber,
