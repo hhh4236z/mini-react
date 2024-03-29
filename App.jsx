@@ -45,17 +45,27 @@ function Foo() {
 
 function App() {
   console.log('app run')
-  const update = React.update()
+  const [count, setCount] = React.useState(10)
+  const [foo, setFoo] = React.useState('foo')
+
   function handleClick() {
-    appCount++
-    update()
+    setCount(v => v + 1)
+    setFoo(v => `${v}0`)
   }
+
+  function handleOtherClick() {
+    setFoo(v => `${v}0`)
+  }
+
   return (
     <div>
       {appCount % 2 === 0 && <p>xixi</p>}
       <h1>app</h1>
       <div>
-        <button onClick={handleClick}>app {appCount}</button>
+        <p>count: {count}</p>
+        <p>msg: {foo}</p>
+        <button onClick={handleClick}>click</button>
+        <button onClick={handleOtherClick}>click 2</button>
       </div>
       <Foo />
       <Bar />

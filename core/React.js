@@ -10,6 +10,11 @@ let wipFiber = null
 // 要删除的
 const deletions = []
 
+// hook 存储
+let stateHooks = []
+// function 内按顺序取 stateHook
+let stateHookIndex = 0
+
 function render(node, container) {
   wipRoot = {
     dom: container,
@@ -30,8 +35,6 @@ function update() {
   return () => {
     wipRoot = {
       ...currentFiber,
-      // reconcileChildren时重新收集 child
-      child: null,
       alternate: currentFiber,
     }
 
@@ -151,7 +154,7 @@ function reconcileChildren(fiber, children) {
     }
 
     // 考虑如果第一个节点是 false，因此不能用 index === 0来判断
-    if (!fiber.child) {
+    if (index === 0 || !prevFiber) {
       // 第一个儿子，
       fiber.child = newFiber
     }
@@ -179,6 +182,10 @@ function reconcileChildren(fiber, children) {
 function updateFunctionComponent(fiber) {
   // 记录更新的 function
   wipFiber = fiber
+
+  // 函数更新了，stateHook重新赋值
+  stateHooks = []
+  stateHookIndex = 0
 
   // fiber.type 即为函数式组件的函数，传入props
   const children = [fiber.type(fiber.props)]
@@ -299,10 +306,42 @@ function shouldSetAsProps(el, key, _value) {
   return key in el
 }
 
+function useState(initial) {
+  const currentFiber = wipFiber
+
+  // 取到上一个存储的state
+  const oldStateHook = wipFiber.alternate?.stateHooks?.[stateHookIndex]
+  stateHookIndex++
+
+  const stateHook = {
+    value: oldStateHook ? oldStateHook.value : initial,
+  }
+
+  stateHooks.push(stateHook)
+  // 保存起来
+  currentFiber.stateHooks = stateHooks
+
+  function setState(action) {
+    // 更新，方便下一次更新的时候，从 alternate 中的stateHooks获取到
+    stateHook.value = action(stateHook.value)
+
+    wipRoot = {
+      ...currentFiber,
+      alternate: currentFiber,
+    }
+
+    nextWorkOfUnit = wipRoot
+    requestIdleCallback(loop)
+  }
+
+  return [stateHook.value, setState]
+}
+
 const React = {
   render,
   update,
   createElement,
+  useState,
 }
 
 export default React
