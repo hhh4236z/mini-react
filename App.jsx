@@ -50,11 +50,11 @@ function App() {
 
   function handleClick() {
     setCount(v => v + 1)
-    setFoo(v => `${v}0`)
   }
-
+  
   function handleOtherClick() {
-    setFoo('bar')
+    setFoo(v => `${v}0`)
+    // setFoo('bar')
   }
 
   React.useEffect(() => {
@@ -62,8 +62,20 @@ function App() {
   }, [])
 
   React.useEffect(() => {
-    console.log('update', count, foo)
-  }, [count, foo])
+    console.log('update cout', count)
+
+    return () => {
+      console.log('clearnup count', count)
+    }
+  }, [count])
+
+  React.useEffect(() => {
+    console.log('update foo', foo)
+
+    return () => {
+      console.log('clearnup foo', foo)
+    }
+  }, [foo])
 
   return (
     <div>
@@ -75,8 +87,8 @@ function App() {
         <button onClick={handleClick}>click</button>
         <button onClick={handleOtherClick}>click 2</button>
       </div>
-      <Foo />
-      <Bar />
+      {/* <Foo />
+      <Bar /> */}
     </div>
   )
 }

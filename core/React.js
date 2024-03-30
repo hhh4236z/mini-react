@@ -272,7 +272,9 @@ function commitEffects() {
 
     if (!fiber.alternate) {
       // 没有旧的对应fiber, 说明时第一次，初始化，那直接调用
-      effectHooks.forEach(hook => hook.callback())
+      effectHooks.forEach((hook) => {
+        hook.cleanup = hook.callback()
+      })
     }
     else {
       // 去判断旧的和新的 dep有无变化
@@ -283,9 +285,12 @@ function commitEffects() {
         // 新旧的 dpes 上有某个位置的值不同，说明 deps 更新了
         // HI: 秒呀！没做前一直在想一个纯原始值怎么检测对比更新？原来这么自然而然，以为每次函数调用，都会传入新的 deps进来，
         // 和旧的以此比较就行了！太秒了
-        const needUpdate = hook.deps.some((val, i) => val !== oldHook[i])
+        const needUpdate = hook.deps.some((val, i) => val !== oldHook.deps[i])
         if (needUpdate)
-          hook.callback()
+          hook.cleanup = hook.callback()
+        // 没更新，把旧的clean 函数拿过来存
+        else
+          hook.cleanup = oldHook.cleanup
       })
     }
 
@@ -293,6 +298,25 @@ function commitEffects() {
     run(fiber.sibling)
   }
 
+  function runCleanup(fiber) {
+    if (!fiber)
+      return
+
+    const oldEffectHooks = fiber.alternate?.effectHooks || []
+    const effectHooks = fiber.effectHooks || []
+    oldEffectHooks.forEach((hook, index) => {
+      const newHook = effectHooks[index]
+      const needUpdate = hook.deps.some((val, i) => val !== newHook.deps[i])
+      // 有更新才需要去调用 cleanup
+      if (needUpdate)
+        hook.cleanup?.()
+    })
+
+    runCleanup(fiber.child)
+    runCleanup(fiber.sibling)
+  }
+
+  runCleanup(wipRoot)
   run(wipRoot)
 }
 
