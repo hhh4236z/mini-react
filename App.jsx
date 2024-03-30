@@ -57,6 +57,14 @@ function App() {
     setFoo('bar')
   }
 
+  React.useEffect(() => {
+    console.log('init')
+  }, [])
+
+  React.useEffect(() => {
+    console.log('update', count, foo)
+  }, [count, foo])
+
   return (
     <div>
       {appCount % 2 === 0 && <p>xixi</p>}

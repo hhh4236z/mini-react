@@ -14,6 +14,8 @@ const deletions = []
 let stateHooks = []
 // function 内按顺序取 stateHook
 let stateHookIndex = 0
+// 收集effect
+let effectHooks = []
 
 function render(node, container) {
   wipRoot = {
@@ -186,6 +188,7 @@ function updateFunctionComponent(fiber) {
   // 函数更新了，stateHook重新赋值
   stateHooks = []
   stateHookIndex = 0
+  effectHooks = []
 
   // fiber.type 即为函数式组件的函数，传入props
   const children = [fiber.type(fiber.props)]
@@ -252,11 +255,45 @@ function loop(deadline) {
     // 没有下一个 fiber 了，说明递归结束了，可以提交了
     // 统一挂载，避免有些任务先挂载显示了，然后后续的没有空闲时间，等会就才挂载
     commitRoot()
+    // 挂载后，执行effect
+    commitEffects()
     // 保存好旧的节点
     currentRoot = wipRoot
     wipRoot = null
   }
   requestIdleCallback(loop)
+}
+
+function commitEffects() {
+  function run(fiber) {
+    if (!fiber)
+      return
+    const effectHooks = fiber.effectHooks || []
+
+    if (!fiber.alternate) {
+      // 没有旧的对应fiber, 说明时第一次，初始化，那直接调用
+      effectHooks.forEach(hook => hook.callback())
+    }
+    else {
+      // 去判断旧的和新的 dep有无变化
+      const oldEffectHooks = fiber.alternate.effectHooks || []
+
+      effectHooks.forEach((hook, index) => {
+        const oldHook = oldEffectHooks[index]
+        // 新旧的 dpes 上有某个位置的值不同，说明 deps 更新了
+        // HI: 秒呀！没做前一直在想一个纯原始值怎么检测对比更新？原来这么自然而然，以为每次函数调用，都会传入新的 deps进来，
+        // 和旧的以此比较就行了！太秒了
+        const needUpdate = hook.deps.some((val, i) => val !== oldHook[i])
+        if (needUpdate)
+          hook.callback()
+      })
+    }
+
+    run(fiber.child)
+    run(fiber.sibling)
+  }
+
+  run(wipRoot)
 }
 
 function commitRoot() {
@@ -356,11 +393,24 @@ function useState(initial) {
   return [stateHook.value, setState]
 }
 
+function useEffect(callback, deps) {
+  const currentFiber = wipFiber
+
+  // 收集
+  effectHooks.push({
+    callback,
+    deps,
+  })
+
+  currentFiber.effectHooks = effectHooks
+}
+
 const React = {
   render,
   update,
   createElement,
   useState,
+  useEffect,
 }
 
 export default React
