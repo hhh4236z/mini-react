@@ -59,6 +59,9 @@ function App() {
 
   React.useEffect(() => {
     console.log('init')
+    return () => {
+      console.log('cleanup init')
+    }
   }, [])
 
   React.useEffect(() => {
