@@ -42,9 +42,6 @@ function commitEffects() {
         const needUpdate = hook.deps.some((val, i) => val !== oldHook.deps[i])
         if (needUpdate)
           hook.cleanup = hook.callback()
-        // 没更新，把旧的clean 函数拿过来存
-        else
-          hook.cleanup = oldHook.cleanup
       })
     }
 
@@ -67,9 +64,84 @@ function commitEffects() {
 
 因此注意看上诉代码中，我们使用 `hook.cleanup` 收集当前 callback 的返回值，然后再下一次 `run` 前去调用所有旧的 cleanup
 
-> 注意一点是：不需要更新的 callbcak，需要把旧的 oldHook 的 cleanup 赋值给当前新的 hook，不然后续之前的 cleanup 就找不到了
+这里有点需要考虑的小问题
 
-然后类似 `run`，我们写一个调用 cleanup 的函数 `hrunCleanup`
+考虑如下代码：
+
+```jsx
+function App() {
+  console.log('app run')
+  const [count, setCount] = React.useState(10)
+  const [foo, setFoo] = React.useState('foo')
+
+  function handleClick() {
+    setCount(v => v + 1)
+  }
+
+  function handleOtherClick() {
+    setFoo(v => `${v}0`)
+    // setFoo('bar')
+  }
+
+  React.useEffect(() => {
+    console.log('init')
+    return () => {
+      console.log('cleanup init')
+    }
+  }, [])
+
+  React.useEffect(() => {
+    console.log('update cout', count)
+
+    return () => {
+      console.log('clearnup count', count)
+    }
+  }, [count])
+
+  React.useEffect(() => {
+    console.log('update foo', foo)
+
+    return () => {
+      console.log('clearnup foo', foo)
+    }
+  }, [foo])
+
+  return (
+    <div>
+      {appCount % 2 === 0 && <p>xixi</p>}
+      <h1>app</h1>
+      <div>
+        <p>
+          count:
+          {count}
+        </p>
+        <p>
+          msg:
+          {foo}
+        </p>
+        <button onClick={handleClick}>click 1</button>
+        <button onClick={handleOtherClick}>click 2</button>
+      </div>
+      {/* <Foo />
+      <Bar /> */}
+    </div>
+  )
+}
+```
+
+1. 点击按钮 1，count 相关的 effect 更新，触发 cleanup count，此时 foo 的依赖不变，因此不做更新，即 `hook.cleanup = hook.callback()` 不会执行到，**当前的 hook 没有 cleanup**
+2. 点击按钮 2，foo 相关的 effect 更新了，找到旧的 hook，**但是上面没有对应的 cleanup 属性**
+
+因此我们需要再不更新的清空下，把旧的 cleanup 赋值上去：
+
+```diff
+if (needUpdate)
+  hook.cleanup = hook.callback()
++ else
++ hook.cleanup = oldHook.cleanup
+```
+
+然后类似 `run`，我们写一个调用 cleanup 的函数 `runCleanup`
 
 ```js
 function runCleanup(fiber) {
