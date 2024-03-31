@@ -115,6 +115,11 @@ function reconcileChildren(fiber, children) {
   // 拿出旧的对应fiber
   // 第一个要比较的显然就是旧的fiber的child
   let oldFiber = fiber.alternate?.child
+
+  // TODO: 如果 children 内的 child是一个数组，怎么做，包一层 fragment 应该把？
+  // 这里先直接flat
+  children = children.flat()
+
   children.forEach((child, index) => {
     let newFiber
 
@@ -192,6 +197,7 @@ function updateFunctionComponent(fiber) {
 
   // fiber.type 即为函数式组件的函数，传入props
   const children = [fiber.type(fiber.props)]
+
   reconcileChildren(fiber, children)
 }
 
@@ -328,7 +334,7 @@ function commitRoot() {
 function deleteFiber(fiber) {
   // 删除fiber
   if (fiber.dom) {
-  // function 节点是没有dom的，因此要向上找
+    // function 节点是没有dom的，因此要向上找
     let parentFiber = fiber.parent
     while (!parentFiber.dom)
       parentFiber = parentFiber.parent
@@ -394,6 +400,7 @@ function useState(initial) {
   function setState(action) {
     const normalAction = typeof action === 'function' ? action : () => action
 
+    // 这里先调用了1次，后面收集又调用了1，导致调用两次
     const eager = normalAction(stateHook.value)
 
     // 更新后的值不变，就没必要更新
@@ -401,9 +408,11 @@ function useState(initial) {
     if (eager === stateHook.value)
       return
 
+    // 直接赋值，没必要调用2次
+    stateHook.value = eager
     // 收集 action
     // 归一化 直接传参的写法
-    stateHook.queue.push(normalAction)
+    // stateHook.queue.push(normalAction)
 
     wipRoot = {
       ...currentFiber,

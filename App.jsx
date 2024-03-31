@@ -1,99 +1,100 @@
-import React from './core/React.js'
+import React from './core/React'
 
-let barCount = 1
-let fooCount = 1
-let appCount = 1
-function Bar() {
-  console.log('bar run')
-  // updateFunctionComponent 内记录 当前组件的 fiber
-  // 同时调用组件的方法，即 Bar()
-  // 则 React.update() 会被调用时，则update 是一个闭包，内部变量指向当前的组件fiber
-  const update = React.update()
-  function handleClick() {
-    barCount++
-    update()
+const filters = [
+  'all',
+  'done',
+  'undo'
+]
+
+function getTodos() {
+  const saved = localStorage.getItem(KEY_TODOS)
+  if (saved) {
+    return JSON.parse(saved)
   }
-  return (
-    <div>
-      <h2>bar</h2>
-      <p>
-        <button onClick={handleClick}>bar {barCount}</button>
-      </p>
-    </div>
-  )
+  return []
 }
 
-function Foo() {
-  console.log('foo run')
-  const update = React.update()
-  function handleClick() {
-    fooCount++
-    update()
+const KEY_TODOS = '__key__todo__'
+const KEY_TODOS_FILTER = '__key__todo__filter__'
+export default function App() {
+  const [msg, setMsg] = React.useState('')
+  const [todos, setTodos] = React.useState(getTodos())
+  const [filter, setFilter] = React.useState(localStorage.getItem(KEY_TODOS_FILTER) || 'all')
+  const filterTotos = todos.filter((todo) => {
+    if (filter === 'all') return true
+    if (filter === 'done') return todo.done
+    return !todo.done
+  })
+
+  function handleAdd() {
+    if (!msg) return
+
+    setTodos(todo => ([
+      ...todo,
+      {
+        done: false,
+        value: msg
+      }
+    ]))
+
+    setMsg('')
   }
-  return (
-    <div>
-      <h2>
-        foo
-      </h2>
-      <p>
-        <button onClick={handleClick}>foo {fooCount}</button>
-      </p>
-    </div>
-  )
-}
 
+  function handleInputKeyup(e) {
+    if (e.code === 'Enter') {
+      handleAdd()
+    }
+  }
 
-function App() {
-  console.log('app run')
-  const [count, setCount] = React.useState(10)
-  const [foo, setFoo] = React.useState('foo')
+  function handleFilter(e) {
+    setFilter(e.target.value)
+  }
 
-  function handleClick() {
-    setCount(v => v + 1)
+  function toggleTodo(todo) {
+    setTodos((todos) => {
+      const newTodos = [...todos]
+      todo.done = !todo.done
+      return newTodos
+    })
   }
   
-  function handleOtherClick() {
-    setFoo(v => `${v}0`)
-    // setFoo('bar')
+  function handleRemove(todo) {
+    setTodos((todos) => todos.filter(_todo => _todo.value === todo.value))
   }
 
-  React.useEffect(() => {
-    console.log('init')
-    return () => {
-      console.log('cleanup init')
-    }
-  }, [])
-
-  React.useEffect(() => {
-    console.log('update cout', count)
-
-    return () => {
-      console.log('clearnup count', count)
-    }
-  }, [count])
-
-  React.useEffect(() => {
-    console.log('update foo', foo)
-
-    return () => {
-      console.log('clearnup foo', foo)
-    }
-  }, [foo])
+  function handleSave() {
+    localStorage.setItem(KEY_TODOS, JSON.stringify(todos))
+    localStorage.setItem(KEY_TODOS_FILTER, filter)
+  }
 
   return (
     <div>
-      {appCount % 2 === 0 && <p>xixi</p>}
-      <h1>app</h1>
       <div>
-        <p>count: {count}</p>
-        <p>msg: {foo}</p>
-        <button onClick={handleClick}>click</button>
-        <button onClick={handleOtherClick}>click 2</button>
+        <input type="text" value={msg} onChange={(e) => setMsg(e.target.value)} onKeyUp={handleInputKeyup}/>
+        <button onClick={handleAdd}>add</button>
       </div>
-      {/* <Foo />
-      <Bar /> */}
+      <button onClick={handleSave}>save</button>
+      <div id='filter-container'>
+        {
+          filters.map((key) => (
+            <span>
+              <input type="radio" name='filter' id={key} value={key} onChange={handleFilter} checked={filter === key}/>
+              <label for={key}>{key}</label>
+            </span>
+          ))
+        }
+      </div>
+      <ul>
+        {
+          filterTotos.map((todo) => (
+            <li>
+              <span className={todo.done ? 'item-done' : 'item-normal'}>{todo.value}</span>
+              <button onClick={() => toggleTodo(todo, !todo.done)}>{ todo.done ? 'cancel' : 'complete' }</button>
+              <button onClick={() => handleRemove(todo)}>remove</button>
+            </li>
+          ))
+        }
+      </ul>
     </div>
   )
 }
-
-export default App
