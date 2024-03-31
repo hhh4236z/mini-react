@@ -76,7 +76,7 @@ export default function App() {
       <button onClick={handleSave}>save</button>
       <div id='filter-container'>
         {
-          filters.map((key) => (
+          ...filters.map((key) => (
             <span>
               <input type="radio" name='filter' id={key} value={key} onChange={handleFilter} checked={filter === key} />
               <label for={key}>{key}</label>
@@ -86,7 +86,7 @@ export default function App() {
       </div>
       <ul>
         {
-          filterTotos.map((todo) => (
+          ...filterTotos.map((todo) => (
             <TodoItem 
               todo={todo}
               toggleTodo={toggleTodo}

@@ -119,8 +119,9 @@ function reconcileChildren(fiber, children) {
   let oldFiber = fiber.alternate?.child
 
   // TODO: 如果 children 内的 child是一个数组，怎么做，包一层 fragment 应该把？
-  // 这里先直接flat
-  children = children.flat()
+  // children = children.flat()
+
+  // 可以使用 `...arr.map(...)`来解构
 
   children.forEach((child, index) => {
     let newFiber

@@ -18,6 +18,8 @@ function reconcileChildren(fiber, children) {
 
 因此可以先将 `children` 给拍扁 (但好像不是好办法，另外看教程好像没有这个问题)
 
+> 仔细看了下，这样是没错的，因为 `.map` 下去那就是个数组，所以写的时候用了 `...map去解构`
+
 - useEffect 中调用了 `setState` 没有渲染出来
 
 这是因为提交状态更新后，采取提交 effects，而 effects 中调用触发新的 state，但没有再次调用提交
