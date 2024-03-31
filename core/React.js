@@ -5,6 +5,8 @@ let nextWorkOfUnit = null
 let wipRoot = null
 // 记录旧的节点
 let currentRoot = null
+// 记录effect后的 wipRoot, 可能会出现 useEffect内更新 useState
+let currentEffectRoot = null
 // 记录中途局部更新的
 let wipFiber = null
 // 要删除的
@@ -258,16 +260,29 @@ function loop(deadline) {
   if (!nextWorkOfUnit && wipRoot) {
     deletions.forEach(deleteFiber)
     deletions.length = 0
-    // 没有下一个 fiber 了，说明递归结束了，可以提交了
-    // 统一挂载，避免有些任务先挂载显示了，然后后续的没有空闲时间，等会就才挂载
-    commitRoot()
-    // 挂载后，执行effect
-    commitEffects()
-    // 保存好旧的节点
-    currentRoot = wipRoot
-    wipRoot = null
+    commitWork()
+
+    if (nextWorkOfUnit && !wipRoot) {
+      // useEffect 中可能会调用 setState, 导致需要再次提交
+      // 因为commitWork 中把 wipRoot 变为空了，而currentRoot 保存了下 wipRoot
+      // 但是这样子 不就 旧的和新的 是同一个了？
+      wipRoot = currentEffectRoot
+    }
   }
   requestIdleCallback(loop)
+}
+
+function commitWork() {
+  // 没有下一个 fiber 了，说明递归结束了，可以提交了
+  // 统一挂载，避免有些任务先挂载显示了，然后后续的没有空闲时间，等会就才挂载
+  commitRoot()
+  // 保存好旧的节点
+  currentRoot = wipRoot
+  // 挂载后，执行effect 可能会 调用 setState, 导致wipRoot更新
+  commitEffects()
+  currentEffectRoot = wipRoot
+
+  wipRoot = null
 }
 
 function commitEffects() {

@@ -6,25 +6,24 @@ const filters = [
   'undo'
 ]
 
-function getTodos() {
-  const saved = localStorage.getItem(KEY_TODOS)
-  if (saved) {
-    return JSON.parse(saved)
-  }
-  return []
-}
-
 const KEY_TODOS = '__key__todo__'
 const KEY_TODOS_FILTER = '__key__todo__filter__'
 export default function App() {
   const [msg, setMsg] = React.useState('')
-  const [todos, setTodos] = React.useState(getTodos())
+  const [todos, setTodos] = React.useState([])
   const [filter, setFilter] = React.useState(localStorage.getItem(KEY_TODOS_FILTER) || 'all')
   const filterTotos = todos.filter((todo) => {
     if (filter === 'all') return true
     if (filter === 'done') return todo.done
     return !todo.done
   })
+
+  React.useEffect(() => {
+    const raw = localStorage.getItem(KEY_TODOS)
+    if (raw) {
+      setTodos(JSON.parse(raw))
+    }
+  }, [])
 
   function handleAdd() {
     if (!msg) return
@@ -33,7 +32,8 @@ export default function App() {
       ...todo,
       {
         done: false,
-        value: msg
+        value: msg,
+        id: crypto.randomUUID()
       }
     ]))
 
@@ -57,9 +57,9 @@ export default function App() {
       return newTodos
     })
   }
-  
+
   function handleRemove(todo) {
-    setTodos((todos) => todos.filter(_todo => _todo.value === todo.value))
+    setTodos((todos) => todos.filter(_todo => _todo.id !== todo.id))
   }
 
   function handleSave() {
@@ -70,7 +70,7 @@ export default function App() {
   return (
     <div>
       <div>
-        <input type="text" value={msg} onChange={(e) => setMsg(e.target.value)} onKeyUp={handleInputKeyup}/>
+        <input type="text" value={msg} onChange={(e) => setMsg(e.target.value)} onKeyUp={handleInputKeyup} />
         <button onClick={handleAdd}>add</button>
       </div>
       <button onClick={handleSave}>save</button>
@@ -78,7 +78,7 @@ export default function App() {
         {
           filters.map((key) => (
             <span>
-              <input type="radio" name='filter' id={key} value={key} onChange={handleFilter} checked={filter === key}/>
+              <input type="radio" name='filter' id={key} value={key} onChange={handleFilter} checked={filter === key} />
               <label for={key}>{key}</label>
             </span>
           ))
@@ -87,14 +87,28 @@ export default function App() {
       <ul>
         {
           filterTotos.map((todo) => (
-            <li>
-              <span className={todo.done ? 'item-done' : 'item-normal'}>{todo.value}</span>
-              <button onClick={() => toggleTodo(todo, !todo.done)}>{ todo.done ? 'cancel' : 'complete' }</button>
-              <button onClick={() => handleRemove(todo)}>remove</button>
-            </li>
+            <TodoItem 
+              todo={todo}
+              toggleTodo={toggleTodo}
+              handleRemove={handleRemove}
+            />
           ))
         }
       </ul>
     </div>
+  )
+}
+
+function TodoItem({
+  todo,
+  toggleTodo,
+  handleRemove,
+}) {
+  return (
+    <li key={todo.id}>
+      <span className={todo.done ? 'item-done' : 'item-normal'}>{todo.value}</span>
+      <button onClick={() => toggleTodo(todo, !todo.done)}>{todo.done ? 'cancel' : 'complete'}</button>
+      <button onClick={() => handleRemove(todo)}>remove</button>
+    </li>
   )
 }
